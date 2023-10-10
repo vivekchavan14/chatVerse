@@ -1,47 +1,123 @@
-import React from 'react';
-import { useState,useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import Logo from './../assets/logo.svg'
+import Logo from './../assets/logo.svg';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+import { registerRoute } from '../utils/APIRoutes';
 
 function Register() {
-    const [values,setValues] = useState({
-        username : " ",
-        email : " ",
-        password : " ",
-        confirmPassword : " ",
-    })
+  const [values, setValues] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  
+  const toastOptions = {
+    position: 'bottom-right',
+    autoClose: 8000,
+    pauseOnHover: true,
+    draggable: true,
+    theme: 'dark',
+  }
 
-    const handleValidation = (event) => {
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
+  const handleValidation = () => {
+    const { password, confirmPassword , username, email} = values;
+    if (password !== confirmPassword) {
+      toast.error('Password and Confirm Password should be the same', toastOptions);
+      return false;
     }
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        alert('form')
+    else if(username.length < 3)
+    {
+      toast.error('Username should be greater than 3 characters', toastOptions);
+      return false;
     }
-    const handleChange = (event) => {
-            setValues({...values,[event.target.name]:event.target.values})
-     };
+    else if(password.length < 3)
+    {
+      toast.error('Password should be equal or greater than 8 characters', toastOptions);
+      return false;
+    }else if (email === " "){
+      toast.error('Email is required', toastOptions);
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (event) => {
+    
+    event.preventDefault();
+    if(handleValidation()){
+      const { password, confirmPassword , username, email} = values;
+      const {data} = await axios.post(registerRoute, {
+        username,
+        password,
+        email,
+      });
+    }
+   
+  };
+
+  const handleChange = (event) => {
+    setValues({ ...values, [event.target.name]: event.target.value });
+  };
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
 
   return (
     <div>
-       <FormContainer>
-          <form onSubmit={(event)=>handleSubmit(event)}>
-              <div className="brand">
-                <img src={Logo} alt='logo'/>
-                <h1>ChatVerse</h1>
-              </div>
-              <input type='text' name='username' placeholder='Username' onChange={(e)=>handleChange(e)}/>
-              <input type='text' name='E-mail' placeholder='Email' onChange={(e)=>handleChange(e)}/>
-              <input type='text' name='password' placeholder='Password' onChange={(e)=>handleChange(e)}/>
-              <input type='text' name='confirmPassword' placeholder='Confirm Password' onChange={(e)=>handleChange(e)}/>
-              <button type='submit'>Create User</button>
-              <span>Already have an account? <Link to="/login">login</Link></span>
-          </form>
-       </FormContainer>
+      <FormContainer>
+        <form onSubmit={(event) => handleSubmit(event)}>
+          <div className="brand">
+            <img src={Logo} alt="logo" />
+            <h1>ChatVerse</h1>
+          </div>
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            onChange={(e) => handleChange(e)}
+          />
+          <input
+            type="text"
+            name="email"
+            placeholder="Email"
+            onChange={(e) => handleChange(e)}
+          />
+          <div className="password-container">
+            <input
+              type={passwordVisible ? 'text' : 'password'}
+              name="password"
+              placeholder="Password"
+              onChange={(e) => handleChange(e)}
+            />
+            <span
+              className={`password-toggle ${passwordVisible ? 'visible' : ''}`}
+              onClick={togglePasswordVisibility}
+            >
+              {passwordVisible ? 'Hide' : 'Show'}
+            </span>
+          </div>
+          <input
+            type={passwordVisible ? 'text' : 'password'}
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            onChange={(e) => handleChange(e)}
+          />
+          <button type="submit">Create User</button>
+          <span>
+            Already have an account? <Link to="/login">Login</Link>
+          </span>
+        </form>
+      </FormContainer>
+      <ToastContainer />
     </div>
-  )
+  );
 }
 
 const FormContainer = styled.div`
@@ -67,7 +143,6 @@ const FormContainer = styled.div`
     h1 {
       color: white;
       text-transform: uppercase;
-    
     }
   }
 
@@ -94,7 +169,21 @@ const FormContainer = styled.div`
       }
     }
 
-    button { // Removed the colon after "button"
+    .password-container {
+      position: relative;
+
+      .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 1rem;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #4e0eff;
+        font-weight: bold;
+      }
+    }
+
+    button {
       background-color: #997af0;
       color: white;
       padding: 1rem 2rem;
@@ -110,19 +199,18 @@ const FormContainer = styled.div`
         background-color: #4e0eff;
       }
     }
-    span{
-        color : white;
-        text-transform : uppercase;
-        a{
-            color: #4e0eff;
-            text-decoration : none;
-            font-weight : bold;
 
-        }
+    span {
+      color: white;
+      text-transform: uppercase;
 
+      a {
+        color: #4e0eff;
+        text-decoration: none;
+        font-weight: bold;
+      }
     }
   }
 `;
 
-
-export default Register
+export default Register;
