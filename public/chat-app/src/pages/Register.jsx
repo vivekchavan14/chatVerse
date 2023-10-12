@@ -1,46 +1,44 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import Logo from './../assets/logo.svg';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import Logo from './../assets/logo.svg';
 import { registerRoute } from '../utils/APIRoutes';
 
 function Register() {
+
+  const navigate = useNavigate();
   const [values, setValues] = useState({
     username: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
-  
+
   const toastOptions = {
     position: 'bottom-right',
     autoClose: 8000,
     pauseOnHover: true,
     draggable: true,
     theme: 'dark',
-  }
+  };
 
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleValidation = () => {
-    const { password, confirmPassword , username, email} = values;
+    const { password, confirmPassword, username, email } = values;
     if (password !== confirmPassword) {
       toast.error('Password and Confirm Password should be the same', toastOptions);
       return false;
-    }
-    else if(username.length < 3)
-    {
+    } else if (username.length < 3) {
       toast.error('Username should be greater than 3 characters', toastOptions);
       return false;
-    }
-    else if(password.length < 3)
-    {
-      toast.error('Password should be equal or greater than 8 characters', toastOptions);
+    } else if (password.length < 8) {
+      toast.error('Password should be at least 8 characters', toastOptions);
       return false;
-    }else if (email === " "){
+    } else if (!email.trim()) {
       toast.error('Email is required', toastOptions);
       return false;
     }
@@ -48,17 +46,30 @@ function Register() {
   };
 
   const handleSubmit = async (event) => {
-    
     event.preventDefault();
-    if(handleValidation()){
-      const { password, confirmPassword , username, email} = values;
-      const {data} = await axios.post(registerRoute, {
-        username,
-        password,
-        email,
-      });
+    if (handleValidation()) {
+      try {
+        const { username, email, password } = values;
+        const { data } = await axios.post(registerRoute, {
+          username,
+          email,
+          password,
+        });
+
+        if(data.status=== false)
+        {
+          toast.error(data.message, toastOptions);
+        }
+        if(data.status === true)
+        {
+           localStorage.setItem('chat-app-user', JSON.stringify(data.user));
+        }
+
+        navigate('/');
+      } catch (error) {
+        console.error('Registration failed:', error);
+      }
     }
-   
   };
 
   const handleChange = (event) => {
@@ -109,7 +120,7 @@ function Register() {
             placeholder="Confirm Password"
             onChange={(e) => handleChange(e)}
           />
-          <button type="submit">Create User</button>
+          <button type="submit" >Create User</button>
           <span>
             Already have an account? <Link to="/login">Login</Link>
           </span>
@@ -119,6 +130,7 @@ function Register() {
     </div>
   );
 }
+
 
 const FormContainer = styled.div`
   height: 100vh;
